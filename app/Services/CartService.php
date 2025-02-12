@@ -6,7 +6,7 @@ use App\Contracts\CartServiceInterface;
 
 class CartService implements CartServiceInterface
 {
-    public function getCartData(): array
+    public function getProducts(): array
     {
         return [
             [
@@ -22,13 +22,13 @@ class CartService implements CartServiceInterface
         ];
     }
 
-    public function getTotalQuantity(array $cart): int
+    public function getTotalQuantity(array $products): int
     {
-        return array_sum(array_column($cart, 'qty'));
+        return array_sum(array_column($products, 'qty'));
     }
 
-    public function getTotalSum(array $cart): float
+    public function getTotalSum(array $products): float
     {
-        return array_sum(array_map(fn($item) => $item['price'] * $item['qty'], $cart));
+        return array_sum(array_map(fn($item) => $item['price'] * $item['qty'], $products));
     }
 }

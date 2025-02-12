@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\CartServiceInterface;
-use App\DTOs\OrderDTO;
+use App\DTOs\OrderUserDataDTO;
 use App\Enums\OrderStatus;
 use App\Events\OrderCreatedEvent;
 use App\Events\OrderStatusChangedEvent;
@@ -24,25 +24,35 @@ class OrderService
         $this->cartService = $cartService;
     }
 
-    public function createOrder(array $data, array $cart): Order
+    public function createOrder(OrderUserDataDTO $userData): Order
     {
-        try {
-            DB::beginTransaction();
+        return DB::transaction(function () use ($userData) {
+            $products = $this->cartService->getProducts();
+            $totalQty = $this->cartService->getTotalQuantity($products);
+            $totalSum = $this->cartService->getTotalSum($products);
 
-            $orderDTO = OrderDTO::fromRequest($data, $cart, $this->cartService);
-            $order = $this->createOrderFromDTO($orderDTO);
-            $this->createOrderItems($order, $orderDTO->items);
+            $order = Order::create([
+                'name' => $userData->name,
+                'email' => $userData->email,
+                'qty' => $totalQty,
+                'sum' => $totalSum,
+                'currency' => 'USD',
+                'status' => OrderStatus::PENDING,
+            ]);
+
+            foreach ($products as $item) {
+                OrderItem::create([
+                    'id_order' => $order->id,
+                    'name_product' => $item['name_product'],
+                    'price' => $item['price'],
+                    'qty' => $item['qty'],
+                ]);
+            }
 
             OrderCreatedEvent::dispatch($order);
 
-            $order = $this->createPayPalOrder($order);
-
-            DB::commit();
-            return $order;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+            return $this->createPayPalOrder($order);
+        });
     }
 
     public function updateOrderStatus(string $orderId): Order
@@ -59,30 +69,6 @@ class OrderService
         OrderStatusChangedEvent::dispatch($order, $status);
 
         return $order;
-    }
-
-    private function createOrderFromDTO(OrderDTO $dto): Order
-    {
-        return Order::create([
-            'name' => $dto->name,
-            'email' => $dto->email,
-            'qty' => $dto->totalQty,
-            'sum' => $dto->totalSum,
-            'currency' => $dto->currency,
-            'status' => OrderStatus::PENDING,
-        ]);
-    }
-
-    private function createOrderItems(Order $order, array $items): void
-    {
-        foreach ($items as $itemDTO) {
-            OrderItem::create([
-                'id_order' => $order->id,
-                'name_product' => $itemDTO->name,
-                'price' => $itemDTO->price,
-                'qty' => $itemDTO->qty,
-            ]);
-        }
     }
 
     private function createPayPalOrder(Order $order): Order

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\CartServiceInterface;
+use App\DTOs\OrderUserDataDTO;
 use App\Enums\OrderStatus;
 use App\Http\Requests\OrderRequest;
 use App\Models\Order;
@@ -26,20 +27,16 @@ class OrderController extends Controller
 
     public function checkout(): View
     {
-        $cart = $this->cartService->getCartData();
+        $cart = $this->cartService->getProducts();
         return view('checkout', compact('cart'));
     }
 
     public function store(OrderRequest $request): RedirectResponse
     {
-        try {
-            $cart = $this->cartService->getCartData();
-            $order = $this->orderService->createOrder($request->validated(), $cart);
+        $userData = OrderUserDataDTO::fromRequest($request);
+        $order = $this->orderService->createOrder($userData);
 
-            return redirect()->route('orders.process-payment', ['orderId' => $order->token]);
-        } catch (\Exception $e) {
-            return back()->with('error', 'An error occurred: ' . $e->getMessage());
-        }
+        return redirect()->route('orders.process-payment', ['orderId' => $order->token]);
     }
 
     public function processPayment(string $orderId): View
@@ -63,20 +60,13 @@ class OrderController extends Controller
 
     public function capture(string $orderId): JsonResponse
     {
-        try {
-            $order = $this->orderService->updateOrderStatus($orderId);
+        $order = $this->orderService->updateOrderStatus($orderId);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Payment captured successfully',
-                'status' => $order->status->label()
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Payment processing failed'
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment captured successfully',
+            'status' => $order->status->label()
+        ]);
     }
 
     public function index(): View

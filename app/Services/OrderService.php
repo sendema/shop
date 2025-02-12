@@ -26,11 +26,11 @@ class OrderService
 
     public function createOrder(OrderUserDataDTO $userData): Order
     {
-        return DB::transaction(function () use ($userData) {
-            $products = $this->cartService->getProducts();
-            $totalQty = $this->cartService->getTotalQuantity($products);
-            $totalSum = $this->cartService->getTotalSum($products);
+        $products = $this->cartService->getProducts();
+        $totalQty = $this->cartService->getTotalQuantity($products);
+        $totalSum = $this->cartService->getTotalSum($products);
 
+        $order = DB::transaction(function () use ($userData, $totalQty, $totalSum, $products) {
             $order = Order::create([
                 'name' => $userData->name,
                 'email' => $userData->email,
@@ -49,10 +49,14 @@ class OrderService
                 ]);
             }
 
-            OrderCreatedEvent::dispatch($order);
-
-            return $this->createPayPalOrder($order);
+            return $order;
         });
+
+        $paypalOrder = $this->createPayPalOrder($order);
+
+        OrderCreatedEvent::dispatch($paypalOrder);
+
+        return $paypalOrder;
     }
 
     public function updateOrderStatus(string $orderId): Order

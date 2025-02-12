@@ -61,10 +61,10 @@ class OrderService
 
     public function updateOrderStatus(string $orderId): Order
     {
-        $paypalOrder = $this->paypalService->capturePayment($orderId);
+        $paypalResponse = $this->paypalService->capturePayment($orderId);
         $order = Order::where('token', $orderId)->firstOrFail();
 
-        $status = $paypalOrder['status'] === 'COMPLETED'
+        $status = $paypalResponse->isCompleted()
             ? OrderStatus::PAID
             : OrderStatus::CANCELLED;
 

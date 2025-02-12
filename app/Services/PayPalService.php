@@ -2,22 +2,17 @@
 
 namespace App\Services;
 
+use App\DTOs\PayPalCaptureResponseDTO;
 use App\Models\Order;
 use Illuminate\Support\Facades\Http;
 
 class PayPalService
 {
-    private string $baseUrl;
-    private string $clientId;
-    private string $clientSecret;
-
-    public function __construct()
-    {
-        $config = config('paypal.' . config('paypal.mode'));
-        $this->baseUrl = $config['base_url'];
-        $this->clientId = $config['client_id'];
-        $this->clientSecret = $config['client_secret'];
-    }
+    public function __construct(
+        private string $baseUrl,
+        private string $clientId,
+        private string $clientSecret
+    ) {}
 
     public function createOrder(Order $order): string
     {
@@ -47,7 +42,7 @@ class PayPalService
         return $response->json()['id'];
     }
 
-    public function capturePayment(string $orderId): array
+    public function capturePayment(string $orderId): PayPalCaptureResponseDTO
     {
         $accessToken = $this->getAccessToken();
 
@@ -63,7 +58,7 @@ class PayPalService
             throw new \Exception('Failed to capture PayPal payment');
         }
 
-        return $response->json();
+        return PayPalCaptureResponseDTO::fromArray($response->json());
     }
 
     private function getAccessToken(): string

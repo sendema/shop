@@ -24,19 +24,11 @@
                         <td class="px-6 py-4">{{ $order->name }}</td>
                         <td class="px-6 py-4">${{ number_format($order->sum, 2) }}</td>
                         <td class="px-6 py-4">
-                            @if($order->status === 0)
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                Pending
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                bg-{{ $order->status->color() }}-100
+                                text-{{ $order->status->color() }}-800">
+                                {{ $order->status->label() }}
                             </span>
-                            @elseif($order->status === 1)
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                Paid
-                            </span>
-                            @else
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                Cancelled
-                            </span>
-                            @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ $order->created_at->format('Y-m-d H:i') }}</td>
                     </tr>
@@ -46,5 +38,3 @@
         </div>
     </div>
 @endsection
-
-

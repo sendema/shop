@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\OrderStatus;
+use App\Events\OrderCreatedEvent;
+use App\Events\OrderStatusChangedEvent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -16,12 +19,26 @@ class Order extends Model
         'status',
         'token',
     ];
-    const STATUS_PENDING = 0;
-    const STATUS_PAID = 1;
-    const STATUS_CANCELLED = 2;
+
+    protected $casts = [
+        'status' => OrderStatus::class
+    ];
 
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class, 'id_order');
+    }
+
+    protected static function booted()
+    {
+        static::created(function ($order) {
+            event(new OrderCreatedEvent($order));
+        });
+
+        static::updated(function ($order) {
+            if ($order->wasChanged('status')) {
+                event(new OrderStatusChangedEvent($order, $order->status));
+            }
+        });
     }
 }

@@ -1,4 +1,3 @@
-<!-- resources/views/process-payment.blade.php -->
 @extends('layouts.app')
 
 @section('content')
@@ -22,15 +21,12 @@
         <script>
             paypal.Buttons({
                 createOrder: function(data, actions) {
-                    // Используем уже созданный заказ
                     return '{{ $orderId }}';
                 },
 
                 onApprove: function(data, actions) {
-                    // Показываем индикатор загрузки
                     document.body.style.cursor = 'wait';
 
-                    // Отправляем запрос на захват платежа
                     return fetch('/orders/capture/' + data.orderID, {
                         method: 'POST',
                         headers: {

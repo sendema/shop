@@ -17,11 +17,6 @@ class OrderCreated extends Mailable
 
     public function build()
     {
-        Log::info('Building OrderCreated email', [
-            'order_id' => $this->order->id,
-            'email' => $this->order->email
-        ]);
-
         return $this->markdown('emails.orders.created')
             ->subject('New Order Created #' . $this->order->id);
     }

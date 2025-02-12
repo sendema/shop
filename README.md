@@ -7,7 +7,6 @@
 - Отправка email-уведомлений
 - Просмотр истории заказов
 
-
 ## Технологический стек
 - Laravel
 - MySQL
@@ -42,3 +41,16 @@ docker-compose exec app php artisan migrate
 ```bash
 docker-compose exec app php artisan test
 ```
+## Скриншоты
+
+### Форма заказа
+![Форма заказа](/docs/images/order.png)
+
+### PayPal
+![](/docs/images/order-summary.png)
+![](/docs/images/payPal-checkout.png)
+![](/docs/images/pay.png)
+![](/docs/images/payment-successful.png)
+
+### Страница заказов
+![Список заказов](/docs/images/orders-page.png)
